@@ -1,7 +1,7 @@
 #include <imp.h>
 
 /***************************/
-/* EXPRESIONES ARITMÉTICAS */
+/* EXPRESIONES ARITMÃ‰TICAS */
 /***************************/
 
 typedef enum {
@@ -105,8 +105,8 @@ aexp_t *aexp_make_mem(aexp_t *indice, memoria *x) {
 }
 
 void agrega(nodo *n, memoria *x){
-    if(x->lista != NULL) agrega(n, m->lista);
-    m->lista = n;
+    if(x->lista != NULL) agrega(n, x->lista);
+    x->lista = n;
 }
 
 void agrega(nodo *n, nodo *m){
@@ -119,20 +119,21 @@ void agrega(nodo *n, nodo *m){
     m->left = n;
 }
 
-aexp_t* busca(aexp_t *mem, aexp_t *indice){
-    return busca(mem, aexp_eval(indice->indice));
-}
-
-aexp_t* busca(aexp_t *p, uint64_t i){
-    uint64_t padre = aexp_eval(p->indice);
-    if(padre < hijo && p->right != NULL) busca(p->right, i);
-    if(padre > hijo && p->left  != NULL) busca(p->left, i);
-    if(padre == hijo) return p;
+nodo* busca(aexp_t *indice, memoria *m){
+    if(m->lista != NULL) return busca(aexp_eval(indice->indice), m->lista);
     return NULL;
 }
-uint64_t obten(aexp_t m){
-    if(m == NULL) return 0;
-    if(aexp_is_mem(m)) return m->num;
+
+nodo* busca(uint64_t i, nodo *n){
+    if(n->indice < i && n->right != NULL) busca(i, n->rigth);
+    if(n > i && n->left  != NULL) busca(i, n->left);
+    if(n == i) return n;
+    return NULL;
+}
+uint64_t obten(uint64_t i, memoria *m){
+    nodo *n = busca(i, m);
+    if(n == NULL) return 0;
+    return n->val
 }
 
 void aexp_free(aexp_t *a) {
@@ -148,7 +149,7 @@ void aexp_free(aexp_t *a) {
 uint64_t aexp_eval(aexp_t *a) {
     if (aexp_is_num(a)) return aexp_num(a);
 
-    if (aexp_is_mem(a)) agrega(aexp_eval(a->indice),a->m);
+    if (aexp_is_mem(a)) agrega(mem_make_nodo(aexp_eval(a->indice)),a->m);
 
     uint64_t nleft = aexp_eval(aexp_left(a));
     uint64_t nright = aexp_eval(aexp_right(a));
@@ -345,11 +346,11 @@ struct nodo{
     nodo *right;
 };
 
-nodo *make_nodo(uint64_t indice)}{
-    return make_nodo(indice, 0);
+nodo *mem_make_nodo(uint64_t indice)}{
+    return mem_make_nodo(indice, 0);
 }
 
-nodo *make_nodo(uint64_t indice, uint64_t val){
+nodo *mem_make_nodo(uint64_t indice, uint64_t val){
     nodo *root = (nodo *)malloc(sizeof(nodo));
     if (root == NULL) return NULL;
     root->indice = indice;
@@ -378,7 +379,7 @@ typedef enum {
 typedef struct programa{
     PROG_TYPE type;
     union{
-        //Estructura "while" (el Booleano se comparte con "if", adem��s 'P' sirve como el primero de los que tienen 2)
+        //Estructura "while" (el Booleano se comparte con "if", adem¨¢s 'P' sirve como el primero de los que tienen 2)
         struct programa *P;
         struct bexp_t *b;
         //Estructura de "asignacion de memoria"
