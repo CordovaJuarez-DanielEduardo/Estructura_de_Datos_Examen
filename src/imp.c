@@ -149,7 +149,8 @@ void aexp_free(aexp_t *a) {
 uint64_t aexp_eval(aexp_t *a) {
     if (aexp_is_num(a)) return aexp_num(a);
 
-    if (aexp_is_mem(a)) agrega(mem_make_nodo(aexp_eval(a->indice)),a->m);
+    //REVISAR EL RETURN//
+    if (aexp_is_mem(a)) return (agrega(mem_make_nodo(aexp_eval(a->indice)),a->m))->indice;
 
     uint64_t nleft = aexp_eval(aexp_left(a));
     uint64_t nright = aexp_eval(aexp_right(a));
@@ -384,8 +385,8 @@ typedef struct programa{
         struct bexp_t *b;
         //Estructura de "asignacion de memoria"
         struct{
-            aexp_t *pos;
-            uint64_t val;
+            aexp_t *indice;
+            aexp_t *val;
         };
         //Estructura de "secuencia de programas"
         struct{
@@ -430,8 +431,8 @@ programa *programa_make_ass(aexp_t *indice, aexp_t *val){
     programa *root = (programa *)malloc(sizeof(programa));
     if(root == NULL) return NULL;
     root->type = PROG_ASS;
-    root->pos = aexp_eval(indice);
-    root->val = aexp_eval(val);
+    root->pos = indice;
+    root->val = val;
     return root;
 }
 
@@ -454,6 +455,10 @@ programa *programa_make_while(bexp_t *b, programa *P){
 
 }
 
+programa *programa_makeif(bexp_t *b, programa *P_then){
+    return programa_make_if(b, P_then, programa_make_skip());
+}
+
 programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else){
     programa *root = (programa *)malloc(sizeof(programa));
     if(root == NULL) return NULL;
@@ -468,9 +473,11 @@ programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else){
 void programa_free(programa *P){
     if(P == NULL) return;
     if(programa_is_skip(P)) return;
+    
     //REVISAR
     if(programa_is_ass(P)) aexp_free(P->pos);
 
+    
     if(programa_is_sec(P)){
         programa_free(P->P);
         programa_free(P->P2);
@@ -494,14 +501,14 @@ uint64_t programa_eval(programa *P, memoria *x){
     if(programa_is_skip(P)) return;
 
     if(programa_is_ass(P)){
-        nodo *n = busca(x, P->pos);
+        nodo *n = busca(P->indice, x);
         if(n == NULL){
-            //a = aexp_make_mem(P->pos, P->val);
-            n = make_nodo(P->pos, P->val);
-            agrega(x, n);
+            aexp_t *a = aexp_make_mem(P->indice, x);
+            aexp_eval(a);
+            n = busca(P->indice, x);
         }
-        n->val =
-        return a->num;
+        n->val = aexp_eval(P->val);
+        return n->val;
     }
 
     if(programa_is_sec(P)){
