@@ -36,6 +36,18 @@ B -> true | false | (A = A) | (A < A) | (B and B) | (B or B) | not B
 A -> N | X | (A + A) | (A - A) | (A * A)
 X -> x[A]
 N -> cualquier natural
+
+De forma adicional y usando las reglas anteriores, tenemos las siguientes:
+P -> (for (P; B ; P) do P) | (P P')
+B -> (A != A) | (A <= A) | (A > A) | (A >= A)
+
+Donde
+    for: (P ; (while B do (P ; P)))
+    P': ;P | ;P P'
+    (A != A): ¬(A = A)
+    (A <= A): ((A < A) V (A = A))
+    (A  > A): ¬(A <= A)
+    (A >= A): ¬(A > A)
 ```
 
 ## Cómo trabajar en esta base de código
