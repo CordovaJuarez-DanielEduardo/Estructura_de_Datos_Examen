@@ -170,7 +170,11 @@ uint64_t aexp_eval(aexp_t *a) {
 typedef enum {
     BEXP_BASURA,
     BEXP_EQUAL,
+    BEXP_NOT_EQUAL,
     BEXP_LESS,
+    BEXP_LESS_EQUAL,
+    BEXP_GREAT,
+    BEXP_GREAT_EQUAL,
     BEXP_AND,
     BEXP_OR,
     BEXP_NEG
@@ -206,8 +210,24 @@ bool bexp_is_equal(bexp_t *b) {
     return b->type == BEXP_EQUAL;
 }
 
+bool bexp_is_not_equal(bexp_t *b) {
+    return b->type == BEXP_NOT_EQUAL;
+}
+
 bool bexp_is_less(bexp_t *b) {
     return b->type == BEXP_LESS;
+}
+
+bool bexp_is_less_equal(bexp_t *b) {
+    return b->type == BEXP_LESS_EQUAL;
+}
+
+bool bexp_is_great(bexp_t *b) {
+    return b->type == BEXP_GREAT;
+}
+
+bool bexp_is_great_equal(bexp_t *b) {
+    return b->type == BEXP_GREAT_EQUAL;
 }
 
 bool bexp_is_and(bexp_t *b) {
@@ -258,6 +278,20 @@ bexp_t *bexp_make_equal(aexp_t *left, aexp_t *right) {
     root->aright = right;
     return root;
 }
+
+bexp_t *bexp_make_not_equal(aexp_t *left, aexp_t *right){
+    bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
+    if (root == NULL) return NULL;
+    root->type = BEXP_NOT_EQUAL;
+    
+    root->bleft = bexp_make_equal(aexp_t *left, aexp_t *right);
+    if(root->bleft == NULL){
+        free(root);
+        return NULL;
+    }
+    return root;
+}
+
 bexp_t *bexp_make_less(aexp_t *left, aexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if (root == NULL) return NULL;
@@ -370,7 +404,8 @@ typedef enum {
     PROG_ASS,
     PROG_SEC,
     PROG_WHILE,
-    PROG_IF
+    PROG_IF,
+    PROG_FOR
 } PROG_TYPE;
 
 /*
@@ -421,6 +456,10 @@ bool programa_is_if(programa *P){
     return P->type == PROG_IF;
 }
 
+bool programa_is_for(programa *P){
+    return P->type == PROG_FOR;
+}
+
 /*** CONSTRUCTORES DE PROGRAMA ***/
 
 programa *programa_make_skip(){
@@ -469,6 +508,23 @@ programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else){
     return root;
 }
 
+programa *programa_make_for(programa *P, bexp_t b, programa *P2, programa *P3){
+    programa *root = (programa *)malloc(sizeof(programa));
+    if(root == NULL) return NULL;
+    
+    programa *SEC = programa_make_sec(P3, P2);
+    programa *WHILE = programa_make_while(b,SEC);
+       
+    root->P = programa_make_sec(P1, WHILE);
+    if(root->P == NULL){
+        free(w);
+        free(root);
+        return NULL;
+    }
+    
+    return root;
+}
+
 
 void programa_free(programa *P){
     if(P == NULL) return;
@@ -491,6 +547,8 @@ void programa_free(programa *P){
         bexp_free(P->b);
         programa_free(P->P);
         programa_free(P->P_else);
+    }
+    if(programa_is_for(P)){
     }
 
     free(P);
