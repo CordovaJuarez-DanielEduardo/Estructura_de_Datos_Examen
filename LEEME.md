@@ -38,10 +38,11 @@ X -> x[A]
 N -> cualquier natural
 
 De forma adicional y usando las reglas anteriores, tenemos las siguientes:
-P -> (for (P; B ; P) do P) | (P P')
+P -> (if B then P) | (for (P; B ; P) do P) | (P P')
 B -> (A != A) | (A <= A) | (A > A) | (A >= A)
 
 Donde
+    if: (if B then P else skip)
     for: (P ; (while B do (P ; P)))
     P': ;P | ;P P'
     (A != A): ¬(A = A)
