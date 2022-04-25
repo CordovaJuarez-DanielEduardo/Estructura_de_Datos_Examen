@@ -48,7 +48,7 @@ Donde
     (A != A): ¬(A = A)
     (A <= A): ((A < A) V (A = A))
     (A  > A): ¬(A <= A)
-    (A >= A): ¬(A > A)
+    (A >= A): ¬(A < A)
 ```
 
 ## Cómo trabajar en esta base de código
