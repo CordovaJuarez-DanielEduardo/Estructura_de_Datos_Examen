@@ -284,10 +284,12 @@ bexp_t *bexp_make_not_equal(aexp_t *left, aexp_t *right){
     if (root == NULL) return NULL;
     root->type = BEXP_NOT_EQUAL;
     
-    root->bleft = bexp_make_equal(aexp_t *left, aexp_t *right);
-    if(root->bleft == NULL){
-        free(root);
-        return NULL;
+    bexp_t *equal = bexp_make_equal(left, right);
+  
+    root->child = bexp_make_neg(equal);
+    if(root->child == NULL){
+        bexp_free(equal);
+        free(root)
     }
     return root;
 }
@@ -300,6 +302,40 @@ bexp_t *bexp_make_less(aexp_t *left, aexp_t *right) {
     root->aright = right;
     return root;
 }
+
+bexp_t *bexp_make_less_equal(aexp_t *left, aexp_t *right){
+    bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
+    if(root == NULL) return NULL;
+    root->type = BEXP_LESS_EQUAL;
+    bexp_t *or, *less, *equal;
+    equal = bexp_make_equal(left, right);
+    less = bexp_make_less(left, right);
+    or = bexp_make_or(less, equal);
+    root->child = or;
+    
+    return root;
+}
+
+bexp_t *bexp_make_great(aexp_t *left, aexp_t *right){
+    bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
+    if(root == NULL) return NULL;
+    root->type = BEXP_GREAT;
+    root->child = bexp_make_neg(bexp_make_less_equal(left, right));
+
+    return root;
+}
+
+bexp_t *bexp_make_great_equal(aexp_t *left, aexp_t *right){
+    bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
+    if(root == NULL) return NULL;
+    root->type = BEXP_GREAT_EQUAL;
+
+    bexp_t *less = bexp_make_less(left, right);
+    root->child = bexp_make_neg(less);
+
+    return root;
+}
+
 bexp_t *bexp_make_and(bexp_t *left, bexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if (root == NULL) return NULL;
@@ -329,6 +365,7 @@ void bexp_free(bexp_t *b) {
 
     if (bexp_is_true(b) || bexp_is_false(b))
         return;
+
 
     if (bexp_is_equal(b) || bexp_is_less(b)) {
         aexp_free(bexp_aleft(b));
