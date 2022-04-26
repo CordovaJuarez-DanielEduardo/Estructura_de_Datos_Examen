@@ -453,11 +453,11 @@ typedef enum {
 
  */
 
-typedef struct programa{
+typedef struct pexp_t{
     PROG_TYPE type;
     union{
         //Estructura "while" (el Booleano se comparte con "if", adem¨¢s 'P' sirve como el primero de los que tienen 2)
-        struct programa *P;
+        struct pexp_t *P;
         struct bexp_t *b;
         //Estructura de "asignacion de memoria"
         struct{
@@ -466,49 +466,50 @@ typedef struct programa{
         };
         //Estructura de "secuencia de programas"
         struct{
-          struct programa *P2;
+          struct pexp_t *P2;
         };
         //Estructura de programa "if"
         struct{
-            struct programa *P_else;
+            struct pexp_t *P_else;
         };
     };
-} programa;
+} pexp_t;
 
-programa progama_skip;
+pexp_t progama_skip;
 
-bool programa_is_skip(programa *P){
+bool programa_is_skip(pexp_t *P){
     return P == &programa_skip;
 }
 
-bool programa_is_ass(programa *P){
+bool programa_is_ass(pexp_t *P){
     return P->type == PROG_ASS;
 }
 
-bool programa_is_sec(programa *P){
+bool programa_is_sec(pexp_t *P){
     return P->type == PROG_SEC;
 }
 
-bool programa_is_while(programa *P){
+bool programa_is_while(pexp_t *P){
     return P->type == PROG_WHILE;
 }
 
-bool programa_is_if(programa *P){
+bool programa_is_if(pexp_t *P){
     return P->type == PROG_IF;
 }
 
-bool programa_is_for(programa *P){
+//ESTO ES DE UN PROGRAMA VERSIÓN EXTENDIDA
+bool programa_is_for(pexp_ex_t *P){
     return P->type == PROG_FOR;
 }
 
 /*** CONSTRUCTORES DE PROGRAMA ***/
 
-programa *programa_make_skip(){
+pexp_t *programa_make_skip(){
     return &programa_skip;
 }
 
-programa *programa_make_ass(aexp_t *indice, aexp_t *val){
-    programa *root = (programa *)malloc(sizeof(programa));
+pexp_t *programa_make_ass(aexp_t *indice, aexp_t *val){
+    pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
     root->type = PROG_ASS;
     root->pos = indice;
@@ -516,8 +517,8 @@ programa *programa_make_ass(aexp_t *indice, aexp_t *val){
     return root;
 }
 
-programa *programa_make_sec(programa *P1, programa *P2){
-    programa *root = (programa *)malloc(sizeof(programa));
+pexp_t *programa_make_sec(pexp_t *P1, pexp_t *P2){
+    pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
     root->type = PROG_SEC;
     root->P = P1;
@@ -525,8 +526,8 @@ programa *programa_make_sec(programa *P1, programa *P2){
     return root;
 }
 
-programa *programa_make_while(bexp_t *b, programa *P){
-    programa *root = (programa *)malloc(sizeof(programa));
+pexp_t *programa_make_while(bexp_t *b, pexp_t *P){
+    pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
     root->type = PROG_WHILE;
     root->b = b;
@@ -535,8 +536,8 @@ programa *programa_make_while(bexp_t *b, programa *P){
 
 }
 
-programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else){
-    programa *root = (programa *)malloc(sizeof(programa));
+pexp_t *programa_make_if(bexp_t *b, pexp_t *P_then, pexp_t *P_else){
+    pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
     root->type = PROG_IF;
     root->b = b;
@@ -546,17 +547,17 @@ programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else){
 }
 
 //programa if para la versión extendida
-programa *programa_make_if(bexp_t *b, programa *P_then){
+pexp_t *programa_make_if(bexp_t *b, pexp_t *P_then){
     return programa_make_if(b, P_then, programa_make_skip());
 }
 
 //programa for para la versión extendida
-programa *programa_make_for(programa *P, bexp_t b, programa *P2, programa *P3){
-    programa *root = (programa *)malloc(sizeof(programa));
+pexp_t *programa_make_for(pexp_t *P, bexp_t b, pexp_t *P2, pexp_t *P3){
+    pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
     
-    programa *SEC = programa_make_sec(P3, P2);
-    programa *WHILE = programa_make_while(b,SEC);
+    pexp_t *SEC = programa_make_sec(P3, P2);
+    pexp_t *WHILE = programa_make_while(b,SEC);
        
     root->P = programa_make_sec(P1, WHILE);
     
@@ -572,7 +573,7 @@ programa *programa_make_for(programa *P, bexp_t b, programa *P2, programa *P3){
 }
 
 
-void programa_free(programa *P){
+void programa_free(pexp_t *P){
     if(P == NULL) return;
     if(programa_is_skip(P)) return;
     
@@ -589,7 +590,7 @@ void programa_free(programa *P){
     free(P);
 }
 
-uint64_t programa_eval(programa *P, memoria *x){
+uint64_t programa_eval(pexp_t *P, memoria *x){
     if(P == NULL) return;
     if(programa_is_skip(P)) return;
 
