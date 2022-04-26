@@ -285,12 +285,10 @@ bexp_t *bexp_make_not_equal(aexp_t *left, aexp_t *right){
     root->type = BEXP_NOT_EQUAL;
     
     bexp_t *equal = bexp_make_equal(left, right);
-  
     root->child = bexp_make_neg(equal);
-    if(root->child == NULL){
-        bexp_free(equal);
-        free(root)
-    }
+    
+    //No se revisan todos los casos en donde debe liberarse la memoria, hace falta checarlo.
+    if(root->child == NULL)   free(root);
     return root;
 }
 
@@ -313,6 +311,8 @@ bexp_t *bexp_make_less_equal(aexp_t *left, aexp_t *right){
     or = bexp_make_or(less, equal);
     root->child = or;
     
+    //No se revisan todos los casos en donde debe liberarse la memoria, hace falta checarlo.
+    if(equal == NULL || (less == NULL || or == NULL)) free(root);
     return root;
 }
 
@@ -322,6 +322,8 @@ bexp_t *bexp_make_great(aexp_t *left, aexp_t *right){
     root->type = BEXP_GREAT;
     root->child = bexp_make_neg(bexp_make_less_equal(left, right));
 
+    //No se revisan todos los casos en donde debe liberarse la memoria, hace falta checarlo.
+    if(root->child == NULL) free(root);
     return root;
 }
 
@@ -332,7 +334,9 @@ bexp_t *bexp_make_great_equal(aexp_t *left, aexp_t *right){
 
     bexp_t *less = bexp_make_less(left, right);
     root->child = bexp_make_neg(less);
-
+    
+    //No se revisan todos los casos en donde debe liberarse la memoria, hace falta checarlo.
+    if(root->child == NULL) free(root);
     return root;
 }
 
@@ -407,16 +411,16 @@ bool bexp_eval(bexp_t *b) {
 /*  MEMORIA  */
 /*************/
 
-struct memoria{
+typedef struct memoria{
     struct nodo *lista;
-};
+} memoria;
 
-struct nodo{
+typedef struct nodo{
     uint64_t indice;
     uint64_t val;
     nodo *left;
     nodo *right;
-};
+} nodo;
 
 nodo *mem_make_nodo(uint64_t indice)}{
     return mem_make_nodo(indice, 0);
@@ -531,10 +535,6 @@ programa *programa_make_while(bexp_t *b, programa *P){
 
 }
 
-programa *programa_makeif(bexp_t *b, programa *P_then){
-    return programa_make_if(b, P_then, programa_make_skip());
-}
-
 programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else){
     programa *root = (programa *)malloc(sizeof(programa));
     if(root == NULL) return NULL;
@@ -545,6 +545,12 @@ programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else){
     return root;
 }
 
+//programa if para la versión extendida
+programa *programa_make_if(bexp_t *b, programa *P_then){
+    return programa_make_if(b, P_then, programa_make_skip());
+}
+
+//programa for para la versión extendida
 programa *programa_make_for(programa *P, bexp_t b, programa *P2, programa *P3){
     programa *root = (programa *)malloc(sizeof(programa));
     if(root == NULL) return NULL;
@@ -553,8 +559,11 @@ programa *programa_make_for(programa *P, bexp_t b, programa *P2, programa *P3){
     programa *WHILE = programa_make_while(b,SEC);
        
     root->P = programa_make_sec(P1, WHILE);
+    
+    //No se revisan todos los casos en que debe liberarse la memoria.
     if(root->P == NULL){
-        free(w);
+        programa_free(WHILE);
+        programa_free(SEC);
         free(root);
         return NULL;
     }
@@ -567,27 +576,16 @@ void programa_free(programa *P){
     if(P == NULL) return;
     if(programa_is_skip(P)) return;
     
-    //REVISAR
-    if(programa_is_ass(P)) aexp_free(P->pos);
-
+    if(programa_is_ass(P)){
+        aexp_free(P->pos);
+        aexp_free(P->val);
+    }
     
-    if(programa_is_sec(P)){
-        programa_free(P->P);
-        programa_free(P->P2);
-    }
-
-    if(programa_is_while(P)){
-        bexp_free(P->b);
-        programa_free(P->P);
-    }
-    if(programa_is_if(P)){
-        bexp_free(P->b);
-        programa_free(P->P);
-        programa_free(P->P_else);
-    }
-    if(programa_is_for(P)){
-    }
-
+    if(programa_is_sec(P)) programa_free(P->P2);
+    if(programa_is_while(P) || programa_is_if(P)) bexp_free(P->b);
+    if(programa_is_if(P)) programa_free(P->P_else);
+    
+    programa_free(P->P);
     free(P);
 }
 
@@ -605,15 +603,18 @@ uint64_t programa_eval(programa *P, memoria *x){
         n->val = aexp_eval(P->val);
         return n->val;
     }
-
-    if(programa_is_sec(P)){
-        programa_eval(P->P);
-        programa_eval(P->P2);
-    }
+    
     if(programa_is_while(P) && bexp_eval(P->b)){
-        programa_eval(P->P);
-        programa_eval(P);
+        programa_eval(P->P, x);
+        programa_eval(P, x);
     }
-    if(bexp_eval(P->b)) programa_eval(P->P);
-    else                programa_eval(P->P_else);
+    
+    if(programa_is_if(P) && !bexp_eval(P->b)){
+        programa_eval(P->P_else, x);
+        return;
+    }
+    
+    programa_eval(P->P, x);
+    if(programa_is_sec(P))  programa_eval(P->P2, x);
+    
 }
