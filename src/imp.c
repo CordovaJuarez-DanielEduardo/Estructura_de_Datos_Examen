@@ -331,7 +331,7 @@ nodo *mem_make_nodo(uint64_t indice, uint64_t val){
 }
 
 void mexp_add(nodo *n, mexp_t *x){
-    if(x->lista != NULL) agrega(n, x->lista);
+    if(x->lista != NULL) mexp_add(n, x->lista);
     x->lista = n;
 }
 
