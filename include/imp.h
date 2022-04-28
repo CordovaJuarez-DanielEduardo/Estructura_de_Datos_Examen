@@ -49,6 +49,7 @@ aexp_t *aexp_make_num(uint64_t num);
 aexp_t *aexp_make_add(aexp_t *left, aexp_t *right);
 aexp_t *aexp_make_sub(aexp_t *left, aexp_t *right);
 aexp_t *aexp_make_mul(aexp_t *left, aexp_t *right);
+aexp_t *aexp_make_mem(aexp_t *indice, mexp_t *x);
 
 /*
   Para liberar el espacio en memoria que ocupa una expresión
@@ -127,6 +128,29 @@ void bexp_free(bexp_t *b);
  */
 bool bexp_eval(bexp_t *b);
 
+
+/*************/
+/*  MEMORIA  */
+/*************/
+
+struct mexp_t;
+typedef struct mexp_t mexp_t;
+
+struct nodo;
+typedef struct nodo nodo;
+
+//Constuctores de nodos. El que sólo recibe indice, inicializa el valor en 0.
+nodo *mem_make_nodo(uint64_t indice);
+nodo *mem_make_nodo(uint64_t indice, uint64_t val);
+
+
+nodo *mexp_add(nodo *n, mexp_t *x);
+nodo *mexp_add(nodo *n, nodo *l);
+  
+nodo *mexp_busca(aexp_t *indice, mexp_t *x);
+nodo *mexp_busca(uint64_t i, nodo *n);
+uint64_t mexp_obten(aexp_t i, mexp_t *x);
+uint64_t mexp_obten(uint64_t i, mexp_t *x)
 /*************/
 /* PROGRAMAS */
 /*************/
@@ -134,8 +158,8 @@ bool bexp_eval(bexp_t *b);
 /*
   Una estructura de tipo `programa' representa un programa.
  */
-struct programa;
-typedef struct programa programa;
+struct pexp_t;
+typedef struct pexp_t pexp_t;
 
 /*
  P -> skip | X := A | (P ; P) | (while B do P) | (if B then P else P)
@@ -148,32 +172,129 @@ typedef struct programa programa;
  Los siguentes predicados determinan qué tipo de programa es P
  Todo programa satisface únicamente a uno de estos predicados.
  */
-bool programa_is_skip(programa *P);
-bool programa_is_mem(programa *P);
-bool programa_is_sec(programa *P);
-bool programa_is_while(programa *P);
-bool programa_is_if(programa *P);
+bool pexp_is_skip(pexp_t *P);
+bool pexp_is_mem(pexp_t *P);
+bool pexp_is_sec(pexp_t *P);
+bool pexp_is_while(pexp_t *P);
+bool pexp_is_if(pexp_t *P);
 
 /*
  Los siguientes constructores permiten crear programas que "no hagan algo",
  modifiquen valores en memoria, que sean secuenciales, que funcionen como un
  ciclo while o un condicional "if-else"; respectivamente.
  */
-programa *programa_make_skip();
-programa *programa_make_mem(programa *P);
-programa *programa_make_sec(programa *P1, programa *P2);
-programa *programa_make_while(bexp_t *b, programa *P);
-programa *programa_make_if(bexp_t *b, programa *P_then, programa *P_else);
+pexp_t *pexp_make_skip();
+pexp_t *pexp_make_mem(pexp_t *P);
+pexp_t *pexp_make_sec(pexp_t *P1, pexp_t *P2);
+pexp_t *pexp_make_while(bexp_t *b, pexp_t *P);
+pexp_t *pexp_make_if(bexp_t *b, pexp_t *P_then, pexp_t *P_else);
 
 /*
   Para liberar el espacio en memoria que ocupa un programa se utiliza
   el siguiente destructor.
  */
-void programa_free(programa *P);
+void pexp_free(pexp_t *P);
 
 /*
  Evaluador de programas.
  */
-void programa_eval(programa *P);
+uint64_t pexp_eval(pexp_t *P);
+
+
+
+/*********************************
+* VERSION EXTENDIDA DE PROGRAMAS *
+*********************************/
+
+
+/*** LISTA DE PROGRAMAS ***/
+
+//"Estructura/identificador" para lista simple de programas.
+struct list_pexp_t;
+typedef struct list_pexp_t list_pexp_t;
+
+/*
+Una lista de programas puede ser vacía, o contener 'n' elementos.
+Las siguientes expresiones nos devuelven:
+    true/false si la lista está vacía.
+    La cantidad de elementos en la lista, puede ser >= 0.
+    El último elemento de una lista.
+    El elemento que se acaba de agregar a la lista.
+    El elemento que se acaba de eliminar de la lista (siempre es el último elemento de la lista).
+*/
+bool list_pexp_vacia(list_pexp_t *l);
+
+uint64_t list_pexp_elem(list_pexp_t *l);
+uint64_t list_pexp_elem(list_pexp_t *l, uint64_t count);
+
+list_pexp_t *list_pexp_ultimo(list_pexp_t *l);
+list_pexp_t *list_pexp_ul(list_pexp_t *l);
+list_pexp_t *list_pexp_add(pexp_t *P, list_pexp_t *l);
+list_pexp_t *list_pexp_sub(list_pexp_t *l);
+
+//Libera la memoria solicitada por toda la lista, junto a los programas de cada elemento.
+void list_pexp_free(list_pexp_t *l);
+
+
+/*** EXTENSIONES DE PROGRAMA ***/
+
+struct pexp_ex_t;
+typedef struct pexp_ex_t pexp_ex_t;
+
+/*
+ P -> (if B then P) | (for (P; B ; P) do P) | (P P')
+ P': ;P | ;P P'
+ 
+ Una extensión de programa puede ser un condicional simple, un ciclo
+ for, o una ejecución secuencial de 'n' programas, respectivamente;
+ usando únicamente la sintaxis de un programa tipo "pexp_t".
+
+ Los siguentes predicados determinan qué tipo de extensión programa es P
+ Toda extensión de programa satisface únicamente a uno de estos predicados.
+ */
+bool pexp_ex_is_if(pexp_ex_t *P);
+bool pexp_ex_is_for(pexp_ex_t *P);
+bool pexp_ex_is_PP(pexp_ex_t *P);
+
+
+/*
+ Los siguientes constructores permiten crear un programa condicional simple "if-then",
+ uno que funcione como un ciclo for, y otro que sea una secuencia de 'n' programas
+ tal que n >= 1; usando la sintaxis de un programa "pexp_t".
+ */
+pexp_ex_t *pexp_ex_make_if(bexp_t *b, pexp_t *lista);
+pexp_ex_t *pexp_ex_make_for(bexp_t *b, pexp_t *lista);
+pexp_ex_t *pexp_ex_make_PP(pexp_t *lista);
+
+//Función que crea una secuencia de programas, a partir de una lista de programas.
+pexp_t *pexp_ex_transforma(list_pexp_t *l);
+
+//Evaluador de extensión de programa.
+pexp_t *pexp_ex_eval(pexp_ex_t *P, mexp_t *x);
+
+//Liberador de memoria solicitada por una extensión de programa.
+void pexp_ex_free(pexp_ex_t *P);
+
+
+
+/*** EXTENSIONES DE EXPRESIONES BOOLEANAS ***/
+
+struct pexp_ex_t;
+typedef struct pexp_ex_t pexp_ex_t;
+
+bool bexp_ex_is_not_equal(bexp_ex_t *b);
+bool bexp_ex_is_less_equal(bexp_ex_t *b);
+bool bexp_ex_is_great(bexp_ex_t *b);
+bool bexp_ex_is_great_equal(bexp_ex_t *b);
+
+
+bexp_ex_t *bexp_make_not_equal(aexp_t *left, aexp_t *right);
+bexp_ex_t *bexp_make_less_equal(aexp_t *left, aexp_t *right);
+bexp_ex_t *bexp_make_great(aexp_t *left, aexp_t *right);
+bexp_ex_t *bexp_make_great_equal(aexp_t *left, aexp_t *right);
+
+bexp_t *bexp_ex_eval(bexp_ex_t *b);
+
+void bexp_ex_free(bexp_ex_t *b);
 
 #endif  /* ED_IMP_H_ */
