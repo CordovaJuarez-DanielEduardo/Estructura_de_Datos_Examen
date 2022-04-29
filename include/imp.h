@@ -34,16 +34,19 @@ bool aexp_is_mul(aexp_t *a);
   El valor de un natural se puede obtener con el selector `aexp_num',
   mientras que los operandos izquierdo y derecho de una suma, resta o
   multiplicación se pueden obtener con los selectores `aexp_left' y
-  `aexp_right' respectivamente.
+  `aexp_right' respectivamente. En caso de crear memoria, se accede al
+  indice con `aexp_indice',
  */
 uint64_t aexp_num(aexp_t *a);
 aexp_t *aexp_left(aexp_t *a);
 aexp_t *aexp_right(aexp_t *a);
+aexp_t *aexp_indice(aexp_t *a);
 
 /*
   Los siguientes constructores permiten crear un natural a partir de
   un valor de tipo `uint64_t', o bien, una expresión aritmética
-  compuesta por otras expresiones aritméticas más simples.
+  compuesta por otras expresiones aritméticas más simples, o una que
+  contenga el inicio de la dirección de memoria.
  */
 aexp_t *aexp_make_num(uint64_t num);
 aexp_t *aexp_make_add(aexp_t *left, aexp_t *right);
@@ -143,14 +146,21 @@ typedef struct nodo nodo;
 nodo *mem_make_nodo(uint64_t indice);
 nodo *mem_make_nodo(uint64_t indice, uint64_t val);
 
-
+nodo *mexp_lista(mexp_t *x);
 nodo *mexp_add(nodo *n, mexp_t *x);
 nodo *mexp_add(nodo *n, nodo *l);
   
 nodo *mexp_busca(aexp_t *indice, mexp_t *x);
 nodo *mexp_busca(uint64_t i, nodo *n);
-uint64_t mexp_obten(aexp_t i, mexp_t *x);
-uint64_t mexp_obten(uint64_t i, mexp_t *x)
+uint64_t mexp_obten_val(aexp_t i, mexp_t *x);
+
+uint64_t nodo_indice(nodo *n);
+uint64_t nodo_val(nodo *n);
+nodo *nodo_left(mexp_t *x);
+nodo *nodo_left(nodo *n);
+nodo *nodo_right(mexp_t *x);
+nodo *nodo_right(nodo *n);
+  
 /*************/
 /* PROGRAMAS */
 /*************/
