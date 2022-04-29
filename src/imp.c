@@ -60,6 +60,10 @@ aexp_t *aexp_right(aexp_t *a) {
     return a->right;
 }
 
+aexp_t *aexp_indice(aexp_t *a) {
+    return a->indice;
+}
+
 aexp_t *aexp_make_num(uint64_t num) {
     aexp_t *a = (aexp_t *)malloc(sizeof(aexp_t));
     if (a == NULL) return NULL;
@@ -108,8 +112,10 @@ void aexp_free(aexp_t *a) {
     if (a == NULL) return;
 
     if (!aexp_is_num(a)) {
-        aexp_free(aexp_left(a));
-        aexp_free(aexp_right(a));
+        if(!aexp_is_mem(a)){
+            aexp_free(aexp_left(a));
+            aexp_free(aexp_right(a));
+        } else  aexp_free(aexp_indice(a));
     }
     free(a);
 }
@@ -320,7 +326,38 @@ typedef struct nodo {
     nodo *right;
 } nodo;
 
-nodo *mem_make_nodo(uint64_t indice){
+nodo *mexp_lista(mexp_t *x) {
+    return x->lista;
+}
+
+uint64_t nodo_indice(nodo *n) {
+    return n->indice;
+}
+
+uint64_t nodo_val(nodo *n) {
+    return n->val;
+}
+
+nodo *nodo_left(mexp_t *x) {
+    return nodo_left(mexp_lista(x));
+}
+
+nodo *nodo_left(nodo *n) {
+    if(n == NULL) return NULL;
+    return n->left;
+}
+
+nodo *nodo_right(mexp_t *x) {
+    return nodo_right(mexp_lista(x));
+}
+
+nodo *nodo_right(nodo *n) {
+    if(n == NULL) return NULL;
+    return n->right;
+}
+
+
+nodo *mem_make_nodo(uint64_t indice) {
     return mem_make_nodo(indice, 0);
 }
 
@@ -335,40 +372,36 @@ nodo *mem_make_nodo(uint64_t indice, uint64_t val){
 }
 
 nodo *mexp_add(nodo *n, mexp_t *x){
-    if(x->lista != NULL) mexp_add(n, x->lista);
-    x->lista = n;
+    if(mexp_list(x) != NULL) return mexp_add(n, mexp_list(x));
+    return x->lista = n;
 }
 
 nodo *mexp_add(nodo *n, nodo *l){
-    if(n->indice == l->indice) return;
-    if(n->indice > l->indice){
-        if(l->right != NULL) mexp_add(n, l->right);
-        l->right = n;
+    if(nodo_indice(n) == nodo_indice(l)) return;
+    if(nodo_indice(n)  > nodo_indice(l)){
+        if(nodo_right(l) != NULL) return mexp_add(n, nodo_right(l));
+        return l->right = n;
     }
-    if(l->left != NULL) mexp_add(n, l->left);
-    l->left = n;
+    if(nodo_left(l) != NULL) return mexp_add(n, nodo_left(l));
+    return l->left = n;
 }
 
 nodo *mexp_busca(aexp_t *indice, mexp_t *x){
-    if(x->lista != NULL) return mexp_busca(aexp_eval(indice->indice), x->lista);
+    if(mexp_list(x) != NULL) return mexp_busca(aexp_eval(aexp_indice(indice)), mexp_list(x));
     return NULL;
 }
 
 nodo *mexp_busca(uint64_t i, nodo *l){
-    if(l->indice  < i && l->right != NULL) mexp_busca(i, l->rigth);
-    if(l->indice  > i && l->left  != NULL) mexp_busca(i, l->left);
-    if(l->indice == i) return l;
+    if(nodo_indice(l)  < i && nodo_right(l) != NULL) return mexp_busca(i, nodo_rigth(l));
+    if(nodo_indice(l)  > i && nodo_left(l)  != NULL) return mexp_busca(i, nodo_left(l));
+    if(nodo_indice(l) == i) return l;
     return NULL;
 }
 
-uint64_t mexp_obten(aexp_t i, mexp_t *x){
-    return mexp_obten(aexp_eval(i), x);
-}
-
-uint64_t mexp_obten(uint64_t i, mexp_t *x){
+uint64_t mexp_obten_val(aexp_t i, mexp_t *x){
     nodo *n = mexp_busca(i, x);
     if(n == NULL) return 0;
-    return n->val
+    return nodo_val(n);
 }
 
 
@@ -411,25 +444,51 @@ typedef struct pexp_t{
 
 pexp_t pexp_skip;
 
-bool pexp_is_skip(pexp_t *P){
+bool pexp_is_skip(pexp_t *P) {
     return P == &pexp_skip;
 }
 
-bool pexp_is_ass(pexp_t *P){
+bool pexp_is_ass(pexp_t *P) {
     return P->type == PROG_ASS;
 }
 
-bool pexp_is_sec(pexp_t *P){
+bool pexp_is_sec(pexp_t *P) {
     return P->type == PROG_SEC;
 }
 
-bool pexp_is_while(pexp_t *P){
+bool pexp_is_while(pexp_t *P) {
     return P->type == PROG_WHILE;
 }
 
-bool pexp_is_if(pexp_t *P){
+bool pexp_is_if(pexp_t *P) {
     return P->type == PROG_IF;
 }
+
+
+pexp_t *pexp_main(pexp_t *P) {
+    return P->P;
+}
+
+pexp_t *pexp_sec(pexp_t *P) {
+    return P->P2;
+}
+
+bexp_t *pexp_bool(pexp_t *P) {
+    return P->b;
+}
+
+aexp_t *pexp_indice(pexp_t *P) {
+    return P->indice;
+}
+
+aexp_t *pexp_val(pexp_t *P) {
+    return P->val;
+}
+
+pexp_t *pexp_else(pexp_t *P) {
+    return P->P_else;
+}
+
 
 /*** CONSTRUCTORES DE PROGRAMA ***/
 
@@ -440,7 +499,8 @@ pexp_t *pexp_make_skip(){
 pexp_t *pexp_make_ass(aexp_t *indice, aexp_t *val){
     pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
-    root->type = PROG_ASS;
+    root->type = PEXP_ASS;
+    root->P = NULL;
     root->indice = indice;
     root->val = val;
     return root;
@@ -449,7 +509,7 @@ pexp_t *pexp_make_ass(aexp_t *indice, aexp_t *val){
 pexp_t *pexp_make_sec(pexp_t *P1, pexp_t *P2){
     pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
-    root->type = PROG_SEC;
+    root->type = PEXP_SEC;
     root->P = P1;
     root->P2 = P2;
     return root;
@@ -458,7 +518,7 @@ pexp_t *pexp_make_sec(pexp_t *P1, pexp_t *P2){
 pexp_t *pexp_make_while(bexp_t *b, pexp_t *P){
     pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
-    root->type = PROG_WHILE;
+    root->type = PEXP_WHILE;
     root->b = b;
     root->P = P;
     return root;
@@ -468,7 +528,7 @@ pexp_t *pexp_make_while(bexp_t *b, pexp_t *P){
 pexp_t *pexp_make_if(bexp_t *b, pexp_t *P_then, pexp_t *P_else){
     pexp_t *root = (pexp_t *)malloc(sizeof(pexp_t));
     if(root == NULL) return NULL;
-    root->type = PROG_IF;
+    root->type = PEXP_IF;
     root->b = b;
     root->P = P_then;
     root->P2 = P_else;
@@ -480,15 +540,15 @@ void pexp_free(pexp_t *P){
     if(pexp_is_skip(P)) return;
     
     if(pexp_is_ass(P)){
-        aexp_free(P->indice);
-        aexp_free(P->val);
+        aexp_free(pexp_indice(P));
+        aexp_free(pexp_val(P));
     }
     
-    if(pexp_is_sec(P)) pexp_free(P->P2);
-    if(pexp_is_while(P) || pexp_is_if(P)) bexp_free(P->b);
-    if(pexp_is_if(P)) pexp_free(P->P_else);
+    if(pexp_is_sec(P)) pexp_free(pexp_sec(P));
+    if(pexp_is_while(P) || pexp_is_if(P)) bexp_free(pexp_bool(b));
+    if(pexp_is_if(P)) pexp_free(pexp_else(P));
     
-    pexp_free(P->P);
+    pexp_free(pexp_main(P));
     free(P);
 }
 
@@ -497,29 +557,29 @@ uint64_t pexp_eval(pexp_t *P, mexp_t *x){
     if(pexp_is_skip(P)) return;
 
     if(pexp_is_ass(P)){
-        nodo *n = busca(P->indice, x);
+        nodo *n = busca(pexp_indice(P), x);
         if(n == NULL){
-            aexp_t *a = aexp_make_mem(P->indice, x);
+            aexp_t *a = aexp_make_mem(pexp_indice(P), x);
             if(a == NULL) return;
             aexp_eval(a);
-            n = busca(P->indice, x);
+            n = busca(pexp_indice(P), x);
         }
-        n->val = aexp_eval(P->val);
-        return n->val;
+        n->val = aexp_eval(pexp_val(P));
+        return nodo_val(n);
     }
     
-    if(pexp_is_while(P) && bexp_eval(P->b)){
-        pexp_eval(P->P, x);
+    if(pexp_is_while(P) && bexp_eval(pexp_bool(P))){
+        pexp_eval(pexp_main(P), x);
         pexp_eval(P, x);
     }
     
-    if(pexp_is_if(P) && !bexp_eval(P->b)){
-        pexp_eval(P->P_else, x);
+    if(pexp_is_if(P) && !bexp_eval(pexp_bool(P))){
+        pexp_eval(pexp_else(P), x);
         return;
     }
     
-    if(!pexp_is_while(P))   pexp_eval(P->P, x);
-    if(pexp_is_sec(P))      pexp_eval(P->P2, x);
+    if(!pexp_is_while(P))   pexp_eval(pexp_main(P), x);
+    if(pexp_is_sec(P))      pexp_eval(pexp_sec(P), x);
     
 }
 
@@ -538,6 +598,18 @@ bool list_pexp_vacia(list_pexp_t *l) {
     return l == NULL;
 }
 
+pexp_t *list_pexp(list_pexp_t *l) {
+    return l->P;
+}
+
+list_pexp_t *list_next(list_pexp_t *l) {
+    return l->next;
+}
+
+list_pexp_t *list_prev(list_pexp_t *l) {
+    return l->prev;
+}
+
 uint64_t list_pexp_elem(list_pexp_t *l) {
     if(list_pexp_vacia(l)) return 0;
     return list_pexp_elem(l, 1);
@@ -550,11 +622,12 @@ uint64_t list_pexp_elem(list_pexp_t *l, unit64_t count) {
 
 list_pexp_t *list_pexp_ultimo(list_pexp_t *l) {
     if(list_pexp_vacia(l)) return l;
+    if(list_next(l) == l) return l;
     return list_pexp_ul(l);
 }
 list_pexp_t *list_pexp_ul(list_pexp_t *l) {
-    if(l->next == NULL) return l;
-    return list_pexp_ul(l->next);
+    if(list_next(l) == NULL) return l;
+    return list_pexp_ul(list_next(l));
 }
 
 list_pexp_t *list_pexp_add(pexp_t *P, list_pexp_t *l) {
@@ -570,19 +643,19 @@ list_pexp_t *list_pexp_add(pexp_t *P, list_pexp_t *l) {
 }
 
 list_pexp_t *list_pexp_sub(list_pexp_t *l) {
-    if(list_pexp_vacia(l)) return;
-    if(l->next == NULL){
+    if(list_pexp_vacia(l)) return NULL;
+    if(list_next(l) == NULL){
         list_pexp_t *ultimo = l;
         l = NULL;
         return ultimo;
     }
-    return list_pexp_sub(l->next);
+    return list_pexp_sub(list_next(l));
 }
 
 void list_pexp_free(list_pexp_t *l) {
     if(list_pexp_vacia(l)) return;
-    list_pexp_t *aux = l->next;
-    pexp_free(l->P);
+    list_pexp_t *aux = list_next(l);
+    pexp_free(list_pexp(l));
     free(l);
     list_pexp_free(aux);
 }
@@ -618,6 +691,14 @@ bool pexp_ex_is_PP(pexp_ex_t *P) {
     return P->type == PEXP_EX_PP;
 }
 
+list_pexp_t *pexp_ex_list(pexp_ex_t *P) {
+    return P->list;
+}
+
+bexp_t *pexp_ex_bool(pexp_ex_t *P) {
+    return P->b;
+}
+
 /**  CONSTRUCTORES  **/
 pexp_ex_t *pexp_ex_make_for(bexp_t *b, pexp_t *lista) {
     pexp_ex_t *root = (pexp_ex_t *)malloc(sizeof(pexp_ex_t));
@@ -651,7 +732,7 @@ pexp_ex_t *pexp_ex_make_PP(pexp_t *lista) {
 //Devuelve un programa 'skip' o una secuencia de programas, usando aquellos dentro de la lista de programas
 pexp_t *pexp_ex_transforma(list_pexp_t *l) {
     if(l == NULL) return pexp_make_skip();
-    return pexp_make_sec(l->P, pexp_ex_transforma(l->next));
+    return pexp_make_sec(list_pexp(l), pexp_ex_transforma(list_next(l)));
 }
 
 pexp_t *pexp_ex_normaliza(pexp_ex_t *P) {
@@ -660,15 +741,16 @@ pexp_t *pexp_ex_normaliza(pexp_ex_t *P) {
 
 pexp_t *pexp_ex_eval(pexp_ex_t *P, mexp_t *x) {
     if(P == NULL) return NULL;
-    pexp_t *t = pexp_ex_transforma(P->list);
+    pexp_t *t = pexp_ex_transforma(pexp_ex_list(P));
     
-    if(pexp_ex_is_for(P) && (list_pexp_elem(P->lista) > 2)) {
-        pexp_t *p = t->P2;
-        pexp_t *sec = pexp_make_sec(p->P2, p->P);
-        pexp_t *w = pexp_make_while(P->b, sec);
-        sec = pexp_make_sec(t->P, w);
+    if(pexp_ex_is_for(P) && (list_pexp_elem(pexp_ex_lista(P)) > 2)) {
+        pexp_t *p = pexp_sec(t);
+        pexp_t *sec = pexp_make_sec(pexp_sec(p), pexp_main(p));
+        pexp_t *w = pexp_make_while(pexp_ex_bool(P), sec);
+        sec = pexp_make_sec(pexp_main(t), w);
+        return sec;
     }
-    if(pexp_ex_is_if(P) && pexp_is_sec(t)) return pexp_make_if(P->b, t->P, t->P2);
+    if(pexp_ex_is_if(P)) return pexp_make_if(pexp_ex_bool(P), pexp_main(t), pexp_make_skip);
     
     if(!pexp_is_sec(t)) return NULL;
     return t;
