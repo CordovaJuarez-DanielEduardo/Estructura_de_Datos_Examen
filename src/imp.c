@@ -589,9 +589,9 @@ uint64_t pexp_eval(pexp_t *P, mexp_t *x){
 ********************************************/
 
 typedef struct list_pexp_t{
-    pexp_t *P;
-    list_pexp_t *next;
-    list_pexp_t *prev;
+    struct pexp_ex_t *P;
+    struct list_pexp_t *next;
+    struct list_pexp_t *prev;
 } list_pexp_t;
 
 bool list_pexp_vacia(list_pexp_t *l) {
@@ -669,10 +669,10 @@ typedef enum{
 }PEXP_EX_TYPE;
 typedef struct pexp_ex_t {
     PEXP_EX_TYPE type;
-    list_pexp_t *list;
+    struct list_pexp_t *list;
     union{
         struct{
-            bexp_t *b;
+            struct bexp_t *b;
         }
     }
 }pexp_ex_t;
@@ -792,12 +792,15 @@ bool bexp_ex_is_great_equal(bexp_ex_t *b) {
     return b->type == BEXP_EX_GREAT_EQUAL;
 }
 
+aexp_t *bexp_ex_left(bexp_ex_t *b) {
+    return b->left;
+}
+
+aexp_t *bexp_ex_right(bexp_ex_t *b) {
+    return b->right;
+}
+
 /* CONSTRUCTORES */
-
-/* EVALUADORES */
-
-
-//  ¡¡¡SEPARAR LA PARTE MAKE, DEL EVALUADOR!!!
 
 bexp_ex_t *bexp_make_not_equal(aexp_t *left, aexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
@@ -873,17 +876,7 @@ bexp_ex_t *bexp_ex_eval(bexp_ex_t *b) {
 }
 
 void bexp_ex_free(bexp_ex_t *b) {
-    if(bexp_ex_is_not_equal(b)){
-        free()
-    }
-    if(bexp_ex_is_less_equal(b)){
-    
-    }
-    if(bexp_ex_is_great(b)){
-    
-    }
-    if(bexp_ex_is_great_equal(b)){
-    
-    }
+    aexp_free(bexp_ex_left(b));
+    aexp_free(bexp_ex_right(b));
     free(b);
 }
