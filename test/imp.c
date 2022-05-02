@@ -443,7 +443,7 @@ fail:
 *****************************/
 
 //EVALUADOR DE NODOS
-bool n_eval_nodo(){
+bool n_make_nodo(){
     nodo *n = nodo_make(0);
     
     check(n != NULL, "Esperaba suficiente memoria");
@@ -492,7 +492,7 @@ bool m_eval_add(){
     check(nodo_left(left) == NULL, "No esperaba hijo izquierdo en left");
     check(nodo_right(left) == NULL, "No esperaba hijo derecho en left");
     
-    check(nodo_left(root) == &left, "Esperaba a left como hijo izquierdo");
+    check(nodo_left(root) == *left, "Esperaba la indireccion de left como hijo izquierdo");
     check(nodo_right(root) == NULL, "No esperaba hijo derecho");
     
     nodo *right = mexp_add(mexp_make_nodo(8, 23), x);
@@ -502,8 +502,8 @@ bool m_eval_add(){
     check(nodo_left(right) == NULL, "No esperaba hijo izquierdo en right");
     check(nodo_right(right) == NULL, "No esperaba hijo derecho en right");
     
-    check(nodo_left(root) == &left, "Esperaba a left como hijo izquierdo en root");
-    check(nodo_right(root) == &right, "Esperaba a right como hijo derecho en root");
+    check(nodo_left(root) == *left, "Esperaba la indireccion de left como hijo izquierdo en root");
+    check(nodo_right(root) == *right, "Esperaba la indireccion de right como hijo derecho en root");
     
     mexp_free(x);
     return true;
@@ -532,7 +532,7 @@ bool m_eval_busca(){
     check(nodo_left(left) == NULL, "No esperaba hijo izquierdo en left");
     check(nodo_right(left) == NULL, "No esperaba hijo derecho en left");
     
-    check(nodo_left(root) == &left, "Esperaba a left como hijo izquierdo");
+    check(nodo_left(root) == *left, "Esperaba la indireccion de left como hijo izquierdo");
     check(nodo_right(root) == NULL, "No esperaba hijo derecho");
     
     nodo *right = mexp_add(mexp_make_nodo(8, 23), x);
@@ -542,11 +542,11 @@ bool m_eval_busca(){
     check(nodo_left(right) == NULL, "No esperaba hijo izquierdo en right");
     check(nodo_right(right) == NULL, "No esperaba hijo derecho en right");
     
-    check(nodo_left(root) == &left, "Esperaba a left como hijo izquierdo en root");
-    check(nodo_right(root) == &right, "Esperaba a right como hijo derecho en root");
+    check(nodo_left(root) == *left, "Esperaba la indireccion de left como hijo izquierdo en root");
+    check(nodo_right(root) == *right, "Esperaba la indireccion de right como hijo derecho en root");
     
-    check(mexp_busca(0, x) == &left, "Esperaba recibir a left, luego de la llamada a funcion");
-    check(mexp_busca(8, x) == &right, "Esperaba recibir a right, luego de la llamada a funcion");
+    check(mexp_busca(0, x) == *left, "Esperaba recibir la indireccion de left, luego de la llamada a funcion");
+    check(mexp_busca(8, x) == *right, "Esperaba recibir la indireccion de right, luego de la llamada a funcion");
     check(mexp_busca(16, x) == NULL, "Esperaba recibir NULL, luego de la llamada a funcion");
     
     mexp_free(x);
@@ -576,7 +576,7 @@ bool m_eval_obten_val(){
     check(nodo_left(left) == NULL, "No esperaba hijo izquierdo en left");
     check(nodo_right(left) == NULL, "No esperaba hijo derecho en left");
     
-    check(nodo_left(root) == &left, "Esperaba a left como hijo izquierdo");
+    check(nodo_left(root) == *left, "Esperaba la indireccion de left como hijo izquierdo");
     check(nodo_right(root) == NULL, "No esperaba hijo derecho");
     
     nodo *right = mexp_add(mexp_make_nodo(8, 23), x);
@@ -586,8 +586,8 @@ bool m_eval_obten_val(){
     check(nodo_left(right) == NULL, "No esperaba hijo izquierdo en right");
     check(nodo_right(right) == NULL, "No esperaba hijo derecho en right");
     
-    check(nodo_left(root) == &left, "Esperaba a left como hijo izquierdo en root");
-    check(nodo_right(root) == &right, "Esperaba a right como hijo derecho en root");
+    check(nodo_left(root) == *left, "Esperaba la indireccion de left como hijo izquierdo en root");
+    check(nodo_right(root) == *right, "Esperaba la indireccion de right como hijo derecho en root");
     
     check(mexp_obten_val(0, x) == nodo_val(left), "Esperaba recibir el valor de left, luego de la llamada a funcion");
     check(mexp_obten_val(8, x) == nodo_val(right), "Esperaba recibir el valor de right, luego de la llamada a funcion");
@@ -599,32 +599,61 @@ fail:
     mexp_free(x);
     return false;
 }
+bool a_make_mem(){
+    mexp_t *x = mexp_init();
+    check(x != NULL, "Esperaba sufuciente memoria para crear \"mexp_t\"");
+    
+    aexp_t *a = aexp_make_mem(aexp_make_sub(2,1), x);
+    check(a != NULL, "Esperaba suficiente memoria para crear a1");
+    check(aexp_is_mem(a), "Esperaba que la expresion fuera \"creacion\" de memoria, para a1");
+    check(aexp_indice(a) == 1, "Esperaba que el indice de a1 fuera 1");
+    check(a->x == &x, "Esperaba que la expresion aritmetica guardara la direccion de x");
+    
+    mexp_free(x);
+    aexp_free(a);
+    return true;
+fail:
+    mexp_free(x);
+    aexp_free(a);
+    return false;
+}
 
 bool a_eval_mem(){
     mexp_t *x = mexp_init();
     check(x != NULL, "Esperaba sufuciente memoria para crear \"mexp_t\"");
-    aexp_t *a = aexp_make_mem(aexp_make_num(1), x);
+    aexp_t *a1 = aexp_make_mem(aexp_make_num(1), x);
     
-    check(a != NULL, "Esperaba suficiente memoria");
-    check(aexp_is_mem(a), "Esperaba que la expresion fuera \"creacion\" memoria");
-    check(aexp_indice(a) == 1, "Esperaba que el indice fuera 1");
-    check(a->x == &x, "Esperaba que la expresion aritmetica guardara la direccion de x");
-    check(aexp_eval(a) == 0, "Esperaba que se devolviera el indice de la memoria \"creada\"");
+    check(a1 != NULL, "Esperaba suficiente memoria para crear a1");
+    check(aexp_eval(a1) == 0, "Esperaba que se devolviera el indice de la memoria \"creada\"");
     
     nodo *root = mexp_lista(x);
     check(root != NULL, "Esperaba una raiz en memoria");
     check(nodo_indice(root) == 1, "Esperaba un 1 en el indice de root");
     check(nodo_val(root) == 0, "Esperaba un 0 en el valor de root");
-        aexp_t a2 = aexp_make_mem(aexp_make_sub(aexp_make_num(8),aexp_make_num(6)));
     check(nodo_left(root) == NULL, "No esperaba hijo izquierdo en root");
     check(nodo_right(root) == NULL, "No esperaba hijo derecho en root");
     
+    aexp_t *a2 = aexp_make_mem(aexp_make_sub(aexp_make_num(8),aexp_make_num(6)), x);
+    check(a2 != NULL, "Esperaba suficiente memoria para crear a2");
+    check(aexp_is_mem(a2), "Esperaba que la expresion fuera \"creacion\" de memoria, para a2");
+    check(aexp_eval(a2) == 2, "Esperaba que el indice de a2 fuera 2");
+    
+    nodo *right = mexp_busca(aexp_eval(aexp_indice(a)), x);
+    check(nodo_right(root) == &right, "Esperaba que el hijo derecho de root fuera el nodo creado con a2");
+    check(nodo_left(root) == NULL, "No esperaba un hijo izquierdo en root");
+    
+    nodo *a_rep = mexp_add(2, x);
+    nodo *n_rep = mexp_busca(2, x);
+    check(a_rep == NULL, "Esperaba que el elemento agregado estuviese repetido");
+    check(*n_rep == *right, "Esperaba que las indirecciones coincidieran");
 
-    aexp_free(a);
+    aexp_free(a1);
+    aexp_free(a2);
     mexp_free(x);
     return true;
 fail:
-    aexp_free(a);
+    aexp_free(a1);
+    aexp_free(a2);
     mexp_free(x);
     return false;
 }
@@ -653,4 +682,11 @@ int main() {
     run_test(b_eval_or);
     run_test(b_eval_neg);
     /* run_test(misdudas); */
+    run_test(n_make_nodo)
+    run_test(m_eval_init);
+    run_test(m_eval_add);
+    run_test(m_eval_busca);
+    run_test(m_eval_obten_val);
+    run_test(a_make_mem);
+    run_test(a_eval_mem);
 }
