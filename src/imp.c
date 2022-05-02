@@ -125,9 +125,9 @@ uint64_t aexp_eval(aexp_t *a) {
 
     //REVISAR EL RETURN//
     if (aexp_is_mem(a)){
-        nodo *n = mem_add(mem_make_nodo(aexp_eval(a->indice)),a->m)
+        nodo *n = mexp_add(nodo_make(aexp_eval(aexp_indice(a)),a->x);
         if(n == NULL) return;
-        return n->indice;
+        return nodo_indice(n);
     }
 
     uint64_t nleft = aexp_eval(aexp_left(a));
