@@ -1,7 +1,9 @@
 #ifndef ED_PEXP_H_
 #define ED_PEXP_H_
 
-
+#include <stdlib.h>
+#include <stdbool.h>
+#include <inttypes.h>
 #include <aexp.h>
 #include <bexp.h>
 #include <mexp.h> 
@@ -53,4 +55,5 @@ void pexp_free(pexp_t *P);
  Evaluador de programas.
  */
 uint64_t pexp_eval(pexp_t *P);
+
 #endif ED_PEXP_H_
