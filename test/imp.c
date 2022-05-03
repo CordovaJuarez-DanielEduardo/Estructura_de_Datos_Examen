@@ -542,9 +542,6 @@ bool m_eval_busca(){
     check(nodo_left(right) == NULL, "No esperaba hijo izquierdo en right");
     check(nodo_right(right) == NULL, "No esperaba hijo derecho en right");
     
-    check(nodo_left(root) == *left, "Esperaba la indireccion de left como hijo izquierdo en root");
-    check(nodo_right(root) == *right, "Esperaba la indireccion de right como hijo derecho en root");
-    
     check(mexp_busca(0, x) == *left, "Esperaba recibir la indireccion de left, luego de la llamada a funcion");
     check(mexp_busca(8, x) == *right, "Esperaba recibir la indireccion de right, luego de la llamada a funcion");
     check(mexp_busca(16, x) == NULL, "Esperaba recibir NULL, luego de la llamada a funcion");
@@ -639,7 +636,7 @@ bool a_eval_mem(){
     check(aexp_eval(a2) == 2, "Esperaba que el indice de a2 fuera 2");
     
     nodo *right = mexp_busca(aexp_eval(aexp_indice(a)), x);
-    check(nodo_right(root) == &right, "Esperaba que el hijo derecho de root fuera el nodo creado con a2");
+    check(nodo_right(root) == *right, "Esperaba que el hijo derecho de root fuera el nodo creado con a2");
     check(nodo_left(root) == NULL, "No esperaba un hijo izquierdo en root");
     
     nodo *a_rep = mexp_add(2, x);
@@ -656,6 +653,206 @@ fail:
     aexp_free(a2);
     mexp_free(x);
     return false;
+}
+
+bool p_make_skip(){
+    pexp_t *p = pexp_make_skip();
+    
+    check(p != NULL, "Esperaba suficiente memoria");
+    check(pexp_is_skip(p), "Esperaba que el programa creado fuera skip");
+    
+    pexp_free(p);
+    return true;
+fail:
+    pexp_free(p);
+    return false;
+}
+
+bool p_make_sec(){
+    pexp_t *p = pexp_make_sec(pexp_make_skip(), pexp_make_skip());
+    
+    check(p != NULL, "Esperaba suficiente memoria");
+    check(pexp_is_sec(p), "Esperaba que se creara una secuencia de programas");
+    check(pexp_is_skip(pexp_main(p)), "Esperaba que el primer programa fuera un skip");
+    check(pexp_is_skip(pexp_sec(p)), "Esperaba que el segundo programa fuera un skip");
+    
+    pexp_free(p);
+    return true;
+fail:
+    pexp_free(p);
+    return false;
+}
+
+bool p_make_ass(){
+    pexp_t *p = pexp_make_ass(aexp_make_num(2), aexp_make_num(3));
+    
+    check(p != NULL, "Esperaba suficiente memoria");
+    check(pexp_is_ass(p), "Esperaba que el programa fuera una asignacion de memoria");
+    check(aexp_is_num(pexp_indice(p)), "Esperaba una expresion aritmetica en el indice");
+    check(aexp_is_num(pexp_val(p)), "Esperaba una expresion aritmetica en el valor");
+    
+    pexp_free(p);
+    return true;
+fail:
+    pexp_free(p);
+    return false;
+}
+
+bool p_make_while(){
+    pexp_t *p = pexp_make_while(bexp_make_true(), pexp_make_skip());
+    
+    check(p != NULL, "Esperaba suficiente memoria");
+    check(pexp_is_while(p), "Esperaba que el programa fuera un while");
+    check(bexp_is_true(pexp_bool(p)), "Esperaba que la expresion booleana fuera true");
+    check(pexp_is_skip(pexp_main(p)), "Esperaba que el programa principal fuera un skip");
+    
+    pexp_free(p);
+    return true;
+fail:
+    pexp_free(p);
+    return false;
+}
+
+bool p_make_if(){
+    pexp_t *p = pexp_make_if(bexp_make_true(), pexp_make_skip(), pexp_make_skip());
+    
+    check(p != NULL, "Esperaba suficiente memoria");
+    check(pexp_is_if(p), "Esperaba que el programa fuera un condicional");
+    check(bexp_is_true(pexp_bool(p)), "Esperaba que la expresion booleana fuera true");
+    check(pexp_is_skip(pexp_main(p)), "Esperaba que el programa principal fuera un skip");
+    check(pexp_is_skip(pexp_else(p)), "Esperaba un programa skip, en \"else\"");
+    
+    pexp_free(p);
+    return true;
+fail:
+    pexp_free(p);
+    return false;
+}
+
+bool p_eval_skip(){
+    pexp_t *p = pexp_make_skip();
+    
+    check(p != NULL, "Esperaba suficiente memoria");
+    check(pexp_eval(p) != NULL, "No esperaba una respuesta del evaluador");
+    
+    pexp_free(p);
+    return true;
+fail:
+    pexp_free(p);
+    return false;
+}
+
+bool p_eval_sec(){
+    pexp_t *p = pexp_sec(pexp_make_ass(aexp_make_num(1), aexp_make_num(10)),
+                         pexp_make_ass(aexp_make_num(3), aexp_make_num(666)));
+    mexp_t *x = mexp_init();
+    
+    check(p != NULL, "Esperaba suficiente memoria para el programa");
+    check(x != NULL, "Esperaba suficiente memoria para la memoria");
+    
+    pexp_eval(p);
+    nodo *root = mexp_busca(1, x);
+    nodo *right = mexp_busca(3, x);
+    
+    check(root != NULL, "Esperaba un nodo en root");
+    check(right != NULL, "Esperaba un nodo en right");
+    check(nodo_indice(root) == 1, "Esperaba root con indice 1");
+    check(nodo_val(root) == 10, "Esperaba valor 10, en root");
+    check(nodo_indice(right) == 3, "Esperaba right con indice 3");
+    check(nodo_val(right) == 666, "Esperaba valor 666, en right");
+    
+    pexp_free(p);
+    mexp_free(x);
+    return true;
+fail:
+    pexp_free(p);
+    mexp_free(x);
+    return false;
+}
+
+bool p_eval_if(){
+    pexp_t *p = pexp_if(bexp_make_true(),
+                            pexp_make_ass(aexp_make_num(3), aexp_make_num(666)),
+                            pexp_make_ass(aexp_make_num(3), aexp_make_num(0)));
+    mexp_t *x = mexp_init();
+    
+    check(p != NULL, "Esperaba suficiente memoria para el programa");
+    check(x != NULL, "Esperaba suficiente memoria para la memoria");
+    
+    pexp_eval(p);
+    nodo *root = mexp_busca(3, x);
+    //Caso de if true
+    check(root != NULL, "Esperaba un nodo en root");
+    check(nodo_indice(root) == 3, "Esperaba root con indice 3");
+    check(nodo_val(root) == 666, "Esperaba valor 666, en root");
+    
+    //Caso de if false
+    p->b = bexp_make_false();
+    pexp_eval(p);
+    check(nodo_indice(root) == 3, "Esperaba right con indice 3");
+    check(nodo_val(root) == 0, "Esperaba valor 0, en root");
+    
+    pexp_free(p);
+    mexp_free(x);
+    return true;
+fail:
+    pexp_free(p);
+    mexp_free(x);
+    return false;
+}
+
+bool p_eval_ass(){
+    pexp_t *p = pexp_make_ass(aexp_make_add(aexp_make_num(4),
+                                            aexp_make_num(2)),
+                              aexp_make_num(66));
+    
+    mexp_t *x = mexp_init();
+    check(p != NULL, "Esperaba suficiente memoria para el programa");
+    check(x != NULL, "Esperaba suficiente memoria para la memoria");
+    check(pexp_eval(p) == 66, "Esperaba asignacion de memoria con valor 66");
+    
+    nodo *root = mexp_lista(x);
+    check(nodo_indice(root) == 6, "Esperaba indice 6, en root");
+    check(nodo_val(root) == 66, "Esperaba valor 66, en root");
+    
+    pexp_free(p);
+    mexp_free(x);
+    return true;
+fail:
+    pexp_free(p);
+    mexp_free(x);
+    return false;    
+}
+
+bool p_eval_while(){
+    mexp_t *x = mexp_init(); 
+   
+    aexp_t *in_salida = aexp_make_num(0);
+    aexp_t *salida = aexp_make_num(1);
+    
+    aexp_t *in_fac = aexp_make_num(1);
+    aexp_t *fac = aexp_make_num(5);
+    
+    aexp_t *in_aux = aexp_make_num(2);
+    aexp_t *aux = aexp_make_num(1);    
+    aexp_t *incremento = aexp_make_num(1);
+    
+    
+    aexp_t *mul = aexp_make_mul(salida, aux);
+    aexp_t *add = aexp_make_add(aux, incremento);
+    
+    pexp_t *calcula = pexp_make_sec(pexp_make_ass(in_salida,
+                                                  mul),
+                                    pexp_make_ass(in_aux,
+                                                  add));
+    
+    bexp_t *compara = bexp_make_or(bexp_make_less(mexp_busca(in_aux, x), mexp_busca(in_fac, x)),
+                                    bexp_make_equal(mexp_busca(in_aux, x), mexp_busca(in_fac, x)));
+    
+    
+    check(p != NULL, "Esperaba suficiente memoria para inicializar el factorial");
+    
+    pexp_t *factorial = pexp_make_while();
 }
 
 int main() {
@@ -689,4 +886,10 @@ int main() {
     run_test(m_eval_obten_val);
     run_test(a_make_mem);
     run_test(a_eval_mem);
+    
+    rin_test(p_make_skip);
+    rin_test(p_make_sec);
+    rin_test(p_make_ass);
+    rin_test(p_make_while);
+    rin_test(p_make_if);
 }
