@@ -151,7 +151,8 @@ typedef enum {
     BEXP_LESS,
     BEXP_AND,
     BEXP_OR,
-    BEXP_NEG
+    BEXP_NEG,
+    BEXP_MEM
 } BEXP_TYPE;
 
 typedef struct bexp_t {
@@ -164,6 +165,10 @@ typedef struct bexp_t {
         struct {
             struct bexp_t *bleft;
             struct bexp_t *bright;
+        };
+        struct {
+            struct nodo *nleft;  
+            struct nodo *nright;
         };
         struct bexp_t *child;
     };
@@ -199,6 +204,10 @@ bool bexp_is_or(bexp_t *b) {
 bool bexp_is_neg(bexp_t *b) {
     return b->type == BEXP_NEG;
 }
+                           
+bool bexp_is_mem(bexp_t *b) {
+    return b->type == BEXP_MEM;
+}
 
 aexp_t *bexp_aleft(bexp_t *b) {
     return b->aleft;
@@ -220,6 +229,14 @@ bexp_t *bexp_nchild(bexp_t *b) {
     return b->child;
 }
 
+uint64_t *bexp_nleft(bexp_t *b) {
+    return nodo_val(b->nleft);
+}
+
+uint64_t *bexp_nright(bexp_t *b) {
+    return nodo_val(b->nright);
+}
+                           
 bexp_t *bexp_make_true() {
     return &bexp_true;
 }
@@ -234,6 +251,19 @@ bexp_t *bexp_make_equal(aexp_t *left, aexp_t *right) {
     root->type = BEXP_EQUAL;
     root->aleft = left;
     root->aright = right;
+    root->nleft = NULL;
+    root->nright = NULL;
+    return root;
+}
+
+bexp_t *bexp_make_equal(nodo *left, nodo *right) {
+    bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
+    if (root == NULL) return NULL;
+    root->type = BEXP_EQUAL;
+    root->aleft = NULL;
+    root->aright = NULL;
+    root->nleft = left;
+    root->nright = right;
     return root;
 }
 
@@ -243,6 +273,19 @@ bexp_t *bexp_make_less(aexp_t *left, aexp_t *right) {
     root->type = BEXP_LESS;
     root->aleft = left;
     root->aright = right;
+    root->nleft = NULL;
+    root->nright = NULL;
+    return root;
+}
+                   
+bexp_t *bexp_make_less(nodo *left, nodo *right) {
+    bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
+    if (root == NULL) return NULL;
+    root->type = BEXP_LESS;
+    root->aleft = NULL;
+    root->aright = NULL;
+    root->nleft = left;
+    root->nright = right;
     return root;
 }
 
@@ -254,6 +297,7 @@ bexp_t *bexp_make_and(bexp_t *left, bexp_t *right) {
     root->bright = right;
     return root;
 }
+                           
 bexp_t *bexp_make_or(bexp_t *left, bexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if (root == NULL) return NULL;
@@ -262,6 +306,7 @@ bexp_t *bexp_make_or(bexp_t *left, bexp_t *right) {
     root->bright = right;
     return root;
 }
+                           
 bexp_t *bexp_make_neg(bexp_t *child) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if (root == NULL) return NULL;
@@ -269,7 +314,7 @@ bexp_t *bexp_make_neg(bexp_t *child) {
     root->child = child;
     return root;
 }
-
+                           
 void bexp_free(bexp_t *b) {
     if (b == NULL) return;
 
@@ -298,11 +343,17 @@ bool bexp_eval(bexp_t *b) {
     if (bexp_is_false(b)) return false;
 
     if (bexp_is_neg(b)) return !bexp_eval(bexp_nchild(b));
-
+        
     if (bexp_is_equal(b))
+        if(bexp_aleft(b) == NULL && bexp_nleft(b) != NULL) {
+            return bexp_nleft(b) == bexp_nright(b);
+        }
         return aexp_eval(bexp_aleft(b)) == aexp_eval(bexp_aright(b));
 
     if (bexp_is_less(b))
+        if(bexp_aleft(b) == NULL && bexp_nleft(b) != NULL) {
+            return bexp_nleft(b) < bexp_nright(b);
+        }
         return aexp_eval(bexp_aleft(b)) < aexp_eval(bexp_aright(b));
 
     if (bexp_is_and(b))
