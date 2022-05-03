@@ -51,7 +51,7 @@ bexp_t *bexp_nchild(bexp_t *b);
 
 
 uint64_t *bexp_nleft(bexp_t *b);
-uint64_t *bexp_nright(bexp_t *b)
+uint64_t *bexp_nright(bexp_t *b);
 
 /*
   Los siguientes constructores permiten crear los valores "true" o "false",
