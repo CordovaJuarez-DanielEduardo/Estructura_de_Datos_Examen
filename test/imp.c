@@ -825,10 +825,29 @@ fail:
 }
 
 bool p_eval_while(){
-    mexp_t *x = mexp_init(); 
+    mexp_t *x = mexp_init();
     
+    nodo *root = mexp_add(mexp_make_nodo(6, 66), x);
+    nodo *left = mexp_add(mexp_make_nodo(1), x);
+    nodo *lright = mexp_add(mexp_make_nodo(3, 33), x);
     
-   
+    pexp_t *p = pexp_make_while(bexp_make_less(left, lright),
+                                pexp_make_ass(aexp_make_num(nodo_indice(left)),
+                                              aexp_make_num(nodo_val(lright))));
+    check(p != NULL, "Esperaba suficiente memoria para crear el programa while");
+    check(bexp_eval(pexp_bool(p)) == true, "Esperaba que la expresion booleana del while, fuera verdadera");
+    check(pexp_eval(p) == nodo_val(lright), "Esperaba que el evaluador devolviera el valor de lright");
+    check(nodo_val(left) == nodo_val(lright), "Esperaba que se asignara el valor de lright, en left");
+    check(bexp_eval(pexp_bool(p)) == false, "Esperaba que la expresion booleana del while, fuera falsa");
+    
+    mexp_free(x);
+    pexp_free(p);
+    return true;
+fail:
+    mexp_free(x);
+    pexp_free(p);
+    return false;
+    /*
     aexp_t *in_salida = aexp_make_num(0);
     aexp_t *salida = aexp_make_num(1);
     
@@ -838,8 +857,7 @@ bool p_eval_while(){
     aexp_t *in_aux = aexp_make_num(2);
     aexp_t *aux = aexp_make_num(1);    
     aexp_t *incremento = aexp_make_num(1);
-    
-    
+        
     aexp_t *mul = aexp_make_mul(salida, aux);
     aexp_t *add = aexp_make_add(aux, incremento);
     
@@ -855,6 +873,7 @@ bool p_eval_while(){
     check(p != NULL, "Esperaba suficiente memoria para inicializar el factorial");
     
     pexp_t *factorial = pexp_make_while();
+    */
 }
 
 int main() {
