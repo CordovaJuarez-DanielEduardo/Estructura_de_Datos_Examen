@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <aexp.h>
+#include <mexp.h>
 
 /*************************/
 /* EXPRESIONES BOOLEANAS */
