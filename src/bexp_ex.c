@@ -82,7 +82,9 @@ bexp_ex_t *bexp_make_great_equal(aexp_t *left, aexp_t *right) {
     return root;
 }
 
-bexp_ex_t *bexp_ex_eval(bexp_ex_t *b) {
+
+//EVALUADOR DE EXPRESIONES BOOLEANAS EXTENDIDAS 
+bexp_t *bexp_ex_eval(bexp_ex_t *b) {
     bexp_t *RETURN = NULL;
     if(bexp_ex_is_not_equal(b)){
         bexp_t *equal = bexp_make_equal(bexp_ex_left(b), bexp_ex_right(b));
