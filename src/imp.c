@@ -124,7 +124,7 @@ uint64_t aexp_eval(aexp_t *a) {
     if (aexp_is_num(a)) return aexp_num(a);
 
     if (aexp_is_mem(a)){
-        nodo *n = mexp_add(nodo_make(aexp_eval(aexp_indice(a)), a->x);
+        nodo *n = mexp_add(mexp_make_nodo(aexp_eval(aexp_indice(a)), a->x);
         if(n == NULL) return;
         return nodo_indice(n);
     }
@@ -407,11 +407,11 @@ nodo *nodo_right(nodo *n) {
 }
 
 
-nodo *mem_make_nodo(uint64_t indice) {
-    return mem_make_nodo(indice, 0);
+nodo *mexp_make_nodo(uint64_t indice) {
+    return mexp_make_nodo(indice, 0);
 }
 
-nodo *mem_make_nodo(uint64_t indice, uint64_t val){
+nodo *mexp_make_nodo(uint64_t indice, uint64_t val){
     nodo *root = (nodo *)malloc(sizeof(nodo));
     if (root == NULL) return NULL;
     root->indice = indice;
