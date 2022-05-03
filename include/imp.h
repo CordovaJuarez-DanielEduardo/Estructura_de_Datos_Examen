@@ -29,6 +29,7 @@ bool aexp_is_num(aexp_t *a);
 bool aexp_is_add(aexp_t *a);
 bool aexp_is_sub(aexp_t *a);
 bool aexp_is_mul(aexp_t *a);
+bool aexp_is_mem(aexp_t *a);
 
 /*
   El valor de un natural se puede obtener con el selector `aexp_num',
@@ -94,6 +95,8 @@ bool bexp_is_and(bexp_t *b);
 bool bexp_is_or(bexp_t *b);
 bool bexp_is_neg(bexp_t *b);
 
+bool bexp_is_mem(bexp_t *b);
+
 /*
   Las expresiones booleanas pueden tener como hijos, a expresiones
   aritméticas u otras expresiones booleanas (incluyendo la negación de
@@ -105,6 +108,9 @@ aexp_t *bexp_aright(bexp_t *b);
 bexp_t *bexp_bleft(bexp_t *b);
 bexp_t *bexp_bright(bexp_t *b);
 bexp_t *bexp_nchild(bexp_t *b);
+
+uint64_t *bexp_nleft(bexp_t *b);
+uint64_t *bexp_nright(bexp_t *b);
 
 /*
   Los siguientes constructores permiten crear los valores "true" o "false",
@@ -119,6 +125,9 @@ bexp_t *bexp_make_less(aexp_t *left, aexp_t *right);
 bexp_t *bexp_make_and(bexp_t *left, bexp_t *right);
 bexp_t *bexp_make_or(bexp_t *left, bexp_t *right);
 bexp_t *bexp_make_neg(bexp_t *child);
+
+bexp_t *bexp_make_equal(nodo *left, nodo *right);
+bexp_t *bexp_make_less(nodo *left, nodo *right);
 
 /*
   Para liberar el espacio en memoria que ocupa una expresión
