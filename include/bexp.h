@@ -1,6 +1,10 @@
 #ifndef ED_BEXP_H_
 #define ED_BEXP_H_
 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <inttypes.h>
+#include <aexp.h>
 
 /*************************/
 /* EXPRESIONES BOOLEANAS */
