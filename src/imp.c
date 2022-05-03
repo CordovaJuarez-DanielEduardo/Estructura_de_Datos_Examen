@@ -22,7 +22,7 @@ typedef struct aexp_t {
         };
         struct {
             struct aexp_t *indice;
-            struct memoria *m;
+            struct mexp_t *x;
         };
     };
 } aexp_t;
@@ -104,7 +104,7 @@ aexp_t *aexp_make_mem(aexp_t *indice, mexp_t *x) {
     if (a == NULL) return NULL;
     a->type = AEXP_MEM;
     a->indice = indice;
-    a->m = x;
+    a->x = x;
     return a;
 }
 
@@ -123,9 +123,8 @@ void aexp_free(aexp_t *a) {
 uint64_t aexp_eval(aexp_t *a) {
     if (aexp_is_num(a)) return aexp_num(a);
 
-    //REVISAR EL RETURN//
     if (aexp_is_mem(a)){
-        nodo *n = mexp_add(nodo_make(aexp_eval(aexp_indice(a)),a->x);
+        nodo *n = mexp_add(nodo_make(aexp_eval(aexp_indice(a)), a->x);
         if(n == NULL) return;
         return nodo_indice(n);
     }
