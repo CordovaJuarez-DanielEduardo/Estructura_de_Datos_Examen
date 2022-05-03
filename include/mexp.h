@@ -1,6 +1,10 @@
 #ifndef ED_MEXP_H_
 #define ED_MEXP_H_
 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <inttypes.h>
+#include <aexp.h>
 
 /*************/
 /*  MEMORIA  */
