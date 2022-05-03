@@ -29,6 +29,7 @@ bool aexp_is_num(aexp_t *a);
 bool aexp_is_add(aexp_t *a);
 bool aexp_is_sub(aexp_t *a);
 bool aexp_is_mul(aexp_t *a);
+bool aexp_is_mem(aexp_t *a);
 
 /*
   El valor de un natural se puede obtener con el selector `aexp_num',
