@@ -46,7 +46,7 @@ bexp_ex_t *bexp_make_not_equal(aexp_t *left, aexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if (root == NULL) return NULL;
     root->type = BEXP_NOT_EQUAL;
-    
+
     root->left = left;
     root->right = right;
     return root;
@@ -56,7 +56,7 @@ bexp_ex_t *bexp_make_less_equal(aexp_t *left, aexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if(root == NULL) return NULL;
     root->type = BEXP_LESS_EQUAL;
-    
+
     root->left = left;
     root->right = right;
     return root;
@@ -66,7 +66,7 @@ bexp_ex_t *bexp_make_great(aexp_t *left, aexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if(root == NULL) return NULL;
     root->type = BEXP_GREAT;
-    
+
     root->left = left;
     root->right = right;
     return root;
@@ -76,14 +76,14 @@ bexp_ex_t *bexp_make_great_equal(aexp_t *left, aexp_t *right) {
     bexp_t *root = (bexp_t *)malloc(sizeof(bexp_t));
     if(root == NULL) return NULL;
     root->type = BEXP_GREAT_EQUAL;
-    
+
     root->left = left;
     root->right = right;
     return root;
 }
 
 
-//EVALUADOR DE EXPRESIONES BOOLEANAS EXTENDIDAS 
+//EVALUADOR DE EXPRESIONES BOOLEANAS EXTENDIDAS
 bexp_t *bexp_ex_eval(bexp_ex_t *b) {
     bexp_t *RETURN = NULL;
     if(bexp_ex_is_not_equal(b)){
@@ -96,7 +96,7 @@ bexp_t *bexp_ex_eval(bexp_ex_t *b) {
         equal = bexp_make_equal(bexp_ex_left(b), bexp_ex_right(b));
         less = bexp_make_less(bexp_ex_left(b), bexp_ex_right(b));
         RETURN = bexp_make_or(less, equal);
-        
+
         if(RETURN == NULL){
             bexp_free(equal);
             bexo_free(less);
@@ -114,6 +114,7 @@ bexp_t *bexp_ex_eval(bexp_ex_t *b) {
 }
 
 void bexp_ex_free(bexp_ex_t *b) {
+    if(b == NULL) return;
     aexp_free(bexp_ex_left(b));
     aexp_free(bexp_ex_right(b));
     free(b);
