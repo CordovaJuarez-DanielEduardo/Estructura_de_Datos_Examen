@@ -826,6 +826,8 @@ fail:
 
 bool p_eval_while(){
     mexp_t *x = mexp_init(); 
+    
+    
    
     aexp_t *in_salida = aexp_make_num(0);
     aexp_t *salida = aexp_make_num(1);
@@ -879,17 +881,25 @@ int main() {
     run_test(b_eval_or);
     run_test(b_eval_neg);
     /* run_test(misdudas); */
+    fprintf(stderr, "- Probando expresiones de memoria\n");
     run_test(n_make_nodo)
     run_test(m_eval_init);
     run_test(m_eval_add);
     run_test(m_eval_busca);
     run_test(m_eval_obten_val);
+    
     run_test(a_make_mem);
     run_test(a_eval_mem);
     
-    rin_test(p_make_skip);
-    rin_test(p_make_sec);
-    rin_test(p_make_ass);
-    rin_test(p_make_while);
-    rin_test(p_make_if);
+    fprintf(stderr, "- Probando expresiones de programas\n");
+    run_test(p_make_skip);
+    run_test(p_make_sec);
+    run_test(p_make_ass);
+    run_test(p_make_while);
+    run_test(p_make_if);
+    run_test(p_eval_skip);
+    run_test(p_eval_sec);
+    run_test(p_eval_ass);
+    run_test(p_eval_if);
+    run_test(p_eval_while);
 }
