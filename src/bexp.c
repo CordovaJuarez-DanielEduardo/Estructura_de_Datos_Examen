@@ -1,6 +1,4 @@
 #include <bexp.h>
-#include <aexp.h>
-#include <mexp.h>
 
 /*************************/
 /* EXPRESIONES BOOLEANAS */
